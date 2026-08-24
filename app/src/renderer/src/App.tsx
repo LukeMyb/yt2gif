@@ -14,7 +14,7 @@ function App() {
 
   // URLからVideoIDを抽出
   const extractVideoId = (inputUrl: string) => {
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|shorts\/)([^#&?]*).*/
     const match = inputUrl.match(regExp)
     if (match && match[2].length === 11) {
       setVideoId(match[2])
