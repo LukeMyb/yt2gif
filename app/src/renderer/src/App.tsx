@@ -78,11 +78,13 @@ function App() {
 
   return (
     <div style={{ padding: '20px', fontFamily: 'sans-serif', minHeight: '100vh', backgroundColor: '#18181b', color: '#d4d4d8' }}>
-      <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+      {/* 2カラムにするため、maxWidthを1000pxに拡大 */}
+      <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
         
         <h2 style={{ color: '#ffffff', marginBottom: '20px' }}>yt2gif - 高精度切り抜きエディタ</h2>
         
-        <div style={{ marginBottom: '20px' }}>
+        {/* 上部：URL入力欄 */}
+        <div style={{ marginBottom: '24px' }}>
           <input 
             type="text" 
             placeholder="YouTubeのURLを入力..." 
@@ -90,32 +92,21 @@ function App() {
             onChange={handleUrlChange}
             style={{ 
               width: '100%', padding: '12px', fontSize: '16px', boxSizing: 'border-box',
-              // bg-[#27272a] と text-white 相当
               backgroundColor: '#27272a', color: '#ffffff', 
-              border: '1px solid #3f3f46', borderRadius: '6px',
-              outline: 'none'
+              border: '1px solid #3f3f46', borderRadius: '6px', outline: 'none'
             }}
           />
         </div>
 
         {videoId && (
-          <>
-            <div style={{ marginBottom: '20px', borderRadius: '8px', overflow: 'hidden', border: '1px solid #3f3f46', backgroundColor: '#000' }}>
-              <YouTube 
-                videoId={videoId} 
-                onReady={onReady}
-                opts={{
-                  width: '100%',
-                  height: '400',
-                  playerVars: { autoplay: 1, controls: 1 }
-                }}
-              />
-            </div>
-
-            <div style={{ padding: '20px', backgroundColor: '#27272a', borderRadius: '8px', border: '1px solid #3f3f46' }}>
-              <h3 style={{ marginTop: 0, color: '#ffffff' }}>切り抜き範囲の指定</h3>
+          // 左右分割レイアウトのコンテナ
+          <div style={{ display: 'flex', gap: '24px', alignItems: 'flex-start' }}>
+            
+            {/* 左側：操作パネル */}
+            <div style={{ flex: '1.5', padding: '24px', backgroundColor: '#27272a', borderRadius: '8px', border: '1px solid #3f3f46' }}>
+              <h3 style={{ marginTop: 0, color: '#ffffff', marginBottom: '30px' }}>切り抜き範囲の指定</h3>
               
-              <div style={{ padding: '10px 15px', marginBottom: '20px' }}>
+              <div style={{ padding: '10px 15px', marginBottom: '30px' }}>
                 <Slider 
                   range 
                   min={0} 
@@ -123,7 +114,6 @@ function App() {
                   step={0.1}
                   value={range} 
                   onChange={handleSliderChange}
-                  // rc-sliderの色を調整
                   trackStyle={[{ backgroundColor: '#ef4444' }]}
                   handleStyle={[
                     { borderColor: '#ef4444', backgroundColor: '#ffffff', opacity: 1 }, 
@@ -133,7 +123,7 @@ function App() {
                 />
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: '12px', color: '#a1a1aa' }}>START</div>
                   <div style={{ fontSize: '24px', fontWeight: 'bold', fontFamily: 'monospace', margin: '5px 0', color: '#ffffff' }}>
@@ -161,7 +151,7 @@ function App() {
 
               <button 
                 style={{
-                  width: '100%', padding: '15px', marginTop: '20px', 
+                  width: '100%', padding: '16px', 
                   backgroundColor: '#ef4444', color: 'white', border: 'none', 
                   borderRadius: '6px', fontSize: '18px', fontWeight: 'bold', cursor: 'pointer',
                 }}
@@ -169,7 +159,22 @@ function App() {
                 GIFを生成する ({formatTime(range[1] - range[0])})
               </button>
             </div>
-          </>
+
+            {/* 右側：動画プレビュー */}
+            <div style={{ flex: '1', borderRadius: '8px', overflow: 'hidden', border: '1px solid #3f3f46', backgroundColor: '#000' }}>
+              <YouTube 
+                videoId={videoId} 
+                onReady={onReady}
+                opts={{
+                  width: '100%',
+                  // ショート動画でも通常の動画でも見やすい高さを設定
+                  height: '450',
+                  playerVars: { autoplay: 1, controls: 1 }
+                }}
+              />
+            </div>
+            
+          </div>
         )}
       </div>
     </div>
@@ -179,7 +184,7 @@ function App() {
 const btnStyle = {
   padding: '6px 12px', margin: '0 4px', cursor: 'pointer',
   border: '1px solid #52525b', borderRadius: '4px', 
-  backgroundColor: '#3f3f46', color: '#d4d4d8', // hover:bg-zinc-700 相当の色味
+  backgroundColor: '#3f3f46', color: '#d4d4d8',
   fontWeight: 'bold'
 }
 
