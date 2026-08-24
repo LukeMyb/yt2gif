@@ -75,6 +75,23 @@ function App() {
     })
   }
 
+  // 生成ボタンを押したときの処理
+  const handleGenerateGif = () => {
+    if (!url) return
+    const data = {
+      url: url,
+      startTime: range[0],
+      endTime: range[1]
+    }
+    
+    // Electronのメインプロセス(裏側)へ通信を送る
+    // (TypeScriptの警告回避のため as any を使用しています)
+    if ((window as any).electron) {
+      (window as any).electron.ipcRenderer.send('generate-gif', data)
+    } else {
+      console.error('Electron環境で実行されていません')
+    }
+  }
 
   return (
     <div style={{ padding: '20px', fontFamily: 'sans-serif', minHeight: '100vh', backgroundColor: '#18181b', color: '#d4d4d8' }}>
@@ -149,6 +166,7 @@ function App() {
               </div>
 
               <button 
+                onClick={handleGenerateGif}
                 style={{
                   width: '100%', padding: '16px', 
                   backgroundColor: '#ef4444', color: 'white', border: 'none', 

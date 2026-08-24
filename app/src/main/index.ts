@@ -61,8 +61,14 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  // IPC test
-  ipcMain.on('ping', () => console.log('pong'))
+  // ReactからのGIF生成リクエストを受け取る処理
+  ipcMain.on('generate-gif', (event, args) => {
+    console.log('--- Reactからデータを受け取りました！ ---')
+    console.log('URL:', args.url)
+    console.log('開始時間 (秒):', args.startTime)
+    console.log('終了時間 (秒):', args.endTime)
+    console.log('--------------------------------------')
+  })
 
   createWindow()
 
