@@ -78,10 +78,9 @@ function App() {
 
   return (
     <div style={{ padding: '20px', fontFamily: 'sans-serif', minHeight: '100vh', backgroundColor: '#18181b', color: '#d4d4d8' }}>
-      {/* 2カラムにするため、maxWidthを1000pxに拡大 */}
-      <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+      <div style={{ width: '100%', margin: '0 auto' }}>
         
-        <h2 style={{ color: '#ffffff', marginBottom: '20px' }}>yt2gif - 高精度切り抜きエディタ</h2>
+        <h2 style={{ color: '#ffffff', marginBottom: '20px' }}>yt2gif</h2>
         
         {/* 上部：URL入力欄 */}
         <div style={{ marginBottom: '24px' }}>
@@ -103,7 +102,7 @@ function App() {
           <div style={{ display: 'flex', gap: '24px', alignItems: 'flex-start' }}>
             
             {/* 左側：操作パネル */}
-            <div style={{ flex: '1.5', padding: '24px', backgroundColor: '#27272a', borderRadius: '8px', border: '1px solid #3f3f46' }}>
+            <div style={{ flex: '1', minWidth: '0', padding: '24px', backgroundColor: '#27272a', borderRadius: '8px', border: '1px solid #3f3f46', boxSizing: 'border-box' }}>
               <h3 style={{ marginTop: 0, color: '#ffffff', marginBottom: '30px' }}>切り抜き範囲の指定</h3>
               
               <div style={{ padding: '10px 15px', marginBottom: '30px' }}>
@@ -161,14 +160,18 @@ function App() {
             </div>
 
             {/* 右側：動画プレビュー */}
-            <div style={{ flex: '1', borderRadius: '8px', overflow: 'hidden', border: '1px solid #3f3f46', backgroundColor: '#000' }}>
+            <div style={{ 
+              flex: '1', minWidth: '0', borderRadius: '8px', overflow: 'hidden', 
+              border: '1px solid #3f3f46', backgroundColor: '#000', 
+              aspectRatio: '16/9', width: '100%', position: 'relative' 
+            }}>
               <YouTube 
                 videoId={videoId} 
                 onReady={onReady}
+                style={{ width: '100%', height: '100%' }}
                 opts={{
                   width: '100%',
-                  // ショート動画でも通常の動画でも見やすい高さを設定
-                  height: '450',
+                  height: '100%',
                   playerVars: { autoplay: 1, controls: 1 }
                 }}
               />
