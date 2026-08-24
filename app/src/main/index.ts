@@ -3,6 +3,11 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 
+import { exec } from 'child_process'
+import * as path from 'path'
+import * as os from 'os'
+import * as fs from 'fs'
+
 function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
@@ -63,11 +68,56 @@ app.whenReady().then(() => {
 
   // ReactからのGIF生成リクエストを受け取る処理
   ipcMain.on('generate-gif', (event, args) => {
-    console.log('--- Reactからデータを受け取りました！ ---')
-    console.log('URL:', args.url)
-    console.log('開始時間 (秒):', args.startTime)
-    console.log('終了時間 (秒):', args.endTime)
-    console.log('--------------------------------------')
+    const { url, startTime, endTime } = args
+    const duration = endTime - startTime
+
+    // appフォルダの1つ上のディレクトリ（プロジェクトルート）を取得
+    const projectRoot = path.join(process.cwd(), '..')
+    
+    // 保存先フォルダの作成（プロジェクトルートの output/）
+    const outputDir = path.join(projectRoot, 'output')
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true })
+    }
+    
+    // 実行ファイル（exe）の絶対パスを指定（プロジェクトルートの bin/）
+    const ytdlpPath = path.join(projectRoot, 'bin', 'yt-dlp.exe')
+    const ffmpegPath = path.join(projectRoot, 'bin', 'ffmpeg.exe')
+
+    // 出力ファイル名の決定
+    const timestamp = new Date().getTime()
+    const outputPath = path.join(outputDir, `output_${timestamp}.gif`)
+    
+    console.log('[yt2gif] Starting GIF generation...')
+    
+    // yt-dlpのコマンド（パスをダブルクォーテーションで囲んで直接実行）
+    const ytdlpCommand = `"${ytdlpPath}" -g -f "bestvideo[ext=mp4]/best" "${url}"`
+    
+    exec(ytdlpCommand, (error, stdout, stderr) => {
+      if (error) {
+        console.error('[yt2gif] yt-dlp Error:', stderr)
+        return
+      }
+      
+      // ストリームURLを抽出
+      const streamUrl = stdout.trim().split('\n')[0]
+      console.log('[yt2gif] Stream URL fetched. Converting to GIF...')
+      
+      // ffmpegのコマンド（パスを直接指定）
+      const ffmpegCommand = `"${ffmpegPath}" -ss ${startTime} -i "${streamUrl}" -t ${duration} -vf "fps=15,scale=480:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse" -y "${outputPath}"`
+      
+      exec(ffmpegCommand, (ffError, ffStdout, ffStderr) => {
+        if (ffError) {
+          console.error('[yt2gif] ffmpeg Error:', ffStderr)
+          return
+        }
+        
+        console.log('[yt2gif] GIF generation completed!')
+        
+        // 完了後、エクスプローラーで保存先のフォルダを自動的に開く
+        shell.showItemInFolder(outputPath)
+      })
+    })
   })
 
   createWindow()
