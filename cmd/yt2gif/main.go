@@ -4,6 +4,9 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
+
+	"yt2gif/internal/gifmaker"
 	"yt2gif/internal/ytdlp"
 )
 
@@ -66,13 +69,32 @@ func main() {
 	fmt.Println("==========================")
 
 	// yt-dlpで部分ダウンロードを実行
-	fmt.Println("\n動画のダウンロードを開始します...")
+	fmt.Println("\n[1/2] 動画の部分ダウンロードを開始します...")
 	tempFile, err := ytdlp.Download(url, start, end)
 	if err != nil {
-		fmt.Printf("エラー: %v\n", err)
+		fmt.Printf("エラー: yt-dlpダウンロード失敗: %v\n", err)
 		os.Exit(1)
 	}
 
-	fmt.Printf("\nダウンロード完了: 一時ファイル [%s] を作成しました\n", tempFile)
-	fmt.Println("ここに ffmpeg を呼び出してGIF化する処理を追加")
+	// yt-dlpは指定したファイル名(temp_video.mp4)に .webm などの拡張子を
+	// 勝手に付与して保存することがあるため、実際に生成されたファイルを特定する
+	matches, _ := filepath.Glob(tempFile + "*")
+	if len(matches) == 0 {
+		fmt.Println("エラー: ダウンロードされた一時ファイルが見つかりません。")
+		os.Exit(1)
+	}
+	actualTempFile := matches[0]
+
+	// ffmpegでGIFに変換
+	fmt.Println("\n[2/2] GIFへの変換を開始します...")
+	err = gifmaker.ConvertToGif(actualTempFile, output)
+	if err != nil {
+		fmt.Printf("エラー: GIF変換失敗: %v\n", err)
+		os.Exit(1)
+	}
+
+	// 成功したら一時ファイルを削除
+	os.Remove(actualTempFile)
+
+	fmt.Printf("\nGIFを生成しました: %s\n", output)
 }
