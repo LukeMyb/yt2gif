@@ -77,99 +77,110 @@ function App() {
 
 
   return (
-    <div style={{ padding: '20px', fontFamily: 'sans-serif', maxWidth: '800px', margin: '0 auto' }}>
-      <h2>yt2gif - 高精度切り抜きエディタ</h2>
-      
-      <div style={{ marginBottom: '20px' }}>
-        <input 
-          type="text" 
-          placeholder="YouTubeのURLを入力..." 
-          value={url}
-          onChange={handleUrlChange}
-          style={{ width: '100%', padding: '10px', fontSize: '16px', boxSizing: 'border-box' }}
-        />
-      </div>
+    <div style={{ padding: '20px', fontFamily: 'sans-serif', minHeight: '100vh', backgroundColor: '#18181b', color: '#d4d4d8' }}>
+      <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+        
+        <h2 style={{ color: '#ffffff', marginBottom: '20px' }}>yt2gif - 高精度切り抜きエディタ</h2>
+        
+        <div style={{ marginBottom: '20px' }}>
+          <input 
+            type="text" 
+            placeholder="YouTubeのURLを入力..." 
+            value={url}
+            onChange={handleUrlChange}
+            style={{ 
+              width: '100%', padding: '12px', fontSize: '16px', boxSizing: 'border-box',
+              // bg-[#27272a] と text-white 相当
+              backgroundColor: '#27272a', color: '#ffffff', 
+              border: '1px solid #3f3f46', borderRadius: '6px',
+              outline: 'none'
+            }}
+          />
+        </div>
 
-      {videoId && (
-        <>
-          <div style={{ marginBottom: '20px', borderRadius: '8px', overflow: 'hidden' }}>
-            <YouTube 
-              videoId={videoId} 
-              onReady={onReady}
-              opts={{
-                width: '100%',
-                height: '400',
-                playerVars: { autoplay: 1, controls: 1 }
-              }}
-            />
-          </div>
-
-          <div style={{ padding: '20px', backgroundColor: '#f5f5f5', borderRadius: '8px' }}>
-            <h3 style={{ marginTop: 0 }}>切り抜き範囲の指定</h3>
-            
-            {/* rc-slider のダブルスライダー */}
-            <div style={{ padding: '10px 15px', marginBottom: '20px' }}>
-              <Slider 
-                range 
-                min={0} 
-                max={duration} 
-                step={0.1} // 0.1秒単位でスナップ
-                value={range} 
-                onChange={handleSliderChange}
-                trackStyle={[{ backgroundColor: '#ff0000' }]}
-                handleStyle={[{ borderColor: '#ff0000' }, { borderColor: '#ff0000' }]}
+        {videoId && (
+          <>
+            <div style={{ marginBottom: '20px', borderRadius: '8px', overflow: 'hidden', border: '1px solid #3f3f46', backgroundColor: '#000' }}>
+              <YouTube 
+                videoId={videoId} 
+                onReady={onReady}
+                opts={{
+                  width: '100%',
+                  height: '400',
+                  playerVars: { autoplay: 1, controls: 1 }
+                }}
               />
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ padding: '20px', backgroundColor: '#27272a', borderRadius: '8px', border: '1px solid #3f3f46' }}>
+              <h3 style={{ marginTop: 0, color: '#ffffff' }}>切り抜き範囲の指定</h3>
               
-              {/* 開始位置の微調整 */}
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '12px', color: '#666' }}>START</div>
-                <div style={{ fontSize: '20px', fontWeight: 'bold', fontFamily: 'monospace', margin: '5px 0' }}>
-                  {formatTime(range[0])}
+              <div style={{ padding: '10px 15px', marginBottom: '20px' }}>
+                <Slider 
+                  range 
+                  min={0} 
+                  max={duration} 
+                  step={0.1}
+                  value={range} 
+                  onChange={handleSliderChange}
+                  // rc-sliderの色を調整
+                  trackStyle={[{ backgroundColor: '#ef4444' }]}
+                  handleStyle={[
+                    { borderColor: '#ef4444', backgroundColor: '#ffffff', opacity: 1 }, 
+                    { borderColor: '#ef4444', backgroundColor: '#ffffff', opacity: 1 }
+                  ]}
+                  railStyle={{ backgroundColor: '#3f3f46' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: '12px', color: '#a1a1aa' }}>START</div>
+                  <div style={{ fontSize: '24px', fontWeight: 'bold', fontFamily: 'monospace', margin: '5px 0', color: '#ffffff' }}>
+                    {formatTime(range[0])}
+                  </div>
+                  <div>
+                    <button onClick={() => adjustRange(0, -0.1)} style={btnStyle}>-0.1s</button>
+                    <button onClick={() => adjustRange(0, 0.1)} style={btnStyle}>+0.1s</button>
+                  </div>
                 </div>
-                <div>
-                  <button onClick={() => adjustRange(0, -0.1)} style={btnStyle}>-0.1s</button>
-                  <button onClick={() => adjustRange(0, 0.1)} style={btnStyle}>+0.1s</button>
+
+                <div style={{ color: '#52525b', fontWeight: 'bold', fontSize: '24px' }}>〜</div>
+
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: '12px', color: '#a1a1aa' }}>END</div>
+                  <div style={{ fontSize: '24px', fontWeight: 'bold', fontFamily: 'monospace', margin: '5px 0', color: '#ffffff' }}>
+                    {formatTime(range[1])}
+                  </div>
+                  <div>
+                    <button onClick={() => adjustRange(1, -0.1)} style={btnStyle}>-0.1s</button>
+                    <button onClick={() => adjustRange(1, 0.1)} style={btnStyle}>+0.1s</button>
+                  </div>
                 </div>
               </div>
 
-              <div style={{ color: '#888', fontWeight: 'bold' }}>〜</div>
-
-              {/* 終了位置の微調整 */}
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '12px', color: '#666' }}>END</div>
-                <div style={{ fontSize: '20px', fontWeight: 'bold', fontFamily: 'monospace', margin: '5px 0' }}>
-                  {formatTime(range[1])}
-                </div>
-                <div>
-                  <button onClick={() => adjustRange(1, -0.1)} style={btnStyle}>-0.1s</button>
-                  <button onClick={() => adjustRange(1, 0.1)} style={btnStyle}>+0.1s</button>
-                </div>
-              </div>
+              <button 
+                style={{
+                  width: '100%', padding: '15px', marginTop: '20px', 
+                  backgroundColor: '#ef4444', color: 'white', border: 'none', 
+                  borderRadius: '6px', fontSize: '18px', fontWeight: 'bold', cursor: 'pointer',
+                }}
+              >
+                GIFを生成する ({formatTime(range[1] - range[0])})
+              </button>
             </div>
-
-            {/* ダウンロード実行ボタン（UIのみ・ロジックは次のステップ） */}
-            <button 
-              style={{
-                width: '100%', padding: '15px', marginTop: '20px', 
-                backgroundColor: '#ff0000', color: 'white', border: 'none', 
-                borderRadius: '4px', fontSize: '18px', fontWeight: 'bold', cursor: 'pointer'
-              }}
-            >
-              GIFを生成する ({formatTime(range[1] - range[0])})
-            </button>
-          </div>
-        </>
-      )}
+          </>
+        )}
+      </div>
     </div>
   )
 }
 
 const btnStyle = {
-  padding: '4px 8px', margin: '0 4px', cursor: 'pointer',
-  border: '1px solid #ccc', borderRadius: '4px', backgroundColor: 'white'
+  padding: '6px 12px', margin: '0 4px', cursor: 'pointer',
+  border: '1px solid #52525b', borderRadius: '4px', 
+  backgroundColor: '#3f3f46', color: '#d4d4d8', // hover:bg-zinc-700 相当の色味
+  fontWeight: 'bold'
 }
 
 export default App
