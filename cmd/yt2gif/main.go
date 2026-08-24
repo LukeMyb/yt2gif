@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"yt2gif/internal/ytdlp"
 )
 
 func main() {
@@ -47,7 +48,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	// 動作確認用の出力（次ステップで実際の処理に置き換えます）
+	if end == "" && duration != "" {
+		fmt.Println("エラー: 現在 -d オプションは準備中のため、-e を使用してください。")
+		os.Exit(1)
+	}
+
 	fmt.Println("=== 実行パラメータ確認 ===")
 	fmt.Printf("URL     : %s\n", url)
 	fmt.Printf("Start   : %s\n", start)
@@ -59,5 +64,15 @@ func main() {
 	}
 	fmt.Printf("Output  : %s\n", output)
 	fmt.Println("==========================")
-	fmt.Println("※ここに yt-dlp と ffmpeg を呼び出す処理を追加します")
+
+	// yt-dlpで部分ダウンロードを実行
+	fmt.Println("\n動画のダウンロードを開始します...")
+	tempFile, err := ytdlp.Download(url, start, end)
+	if err != nil {
+		fmt.Printf("エラー: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Printf("\nダウンロード完了: 一時ファイル [%s] を作成しました\n", tempFile)
+	fmt.Println("ここに ffmpeg を呼び出してGIF化する処理を追加")
 }
