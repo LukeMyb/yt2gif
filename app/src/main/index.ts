@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, session } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
@@ -15,6 +15,18 @@ function createWindow(): void {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false
     }
+  })
+
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    // サーバーから送られてくるヘッダーの中から CSP を削除してElectronに渡す
+    const responseHeaders = { ...details.responseHeaders }
+    delete responseHeaders['content-security-policy']
+    delete responseHeaders['Content-Security-Policy']
+
+    callback({
+      cancel: false,
+      responseHeaders: responseHeaders
+    })
   })
 
   mainWindow.on('ready-to-show', () => {
