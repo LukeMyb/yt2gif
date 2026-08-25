@@ -13,6 +13,35 @@ function App() {
   const [range, setRange] = useState<[number, number]>([0, 0])
   const playerRef = useRef<YouTubePlayer | null>(null)
 
+  // 自動停止のための監視機能
+  // setIntervalの中で常に最新の range を参照するためのRef
+  const rangeRef = useRef<[number, number]>(range)
+  useEffect(() => {
+    rangeRef.current = range
+  }, [range])
+
+  // 0.1秒間隔で再生位置を監視する
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (playerRef.current) {
+        // getPlayerState() の 1 は「再生中 (PLAYING)」を意味します
+        if (playerRef.current.getPlayerState() === 1) {
+          const currentTime = playerRef.current.getCurrentTime()
+          const endTime = rangeRef.current[1] // 現在のEND時間
+          
+          // 再生位置がEND時間を超えたら
+          if (currentTime >= endTime) {
+            playerRef.current.pauseVideo()        // 動画を一時停止
+            playerRef.current.seekTo(endTime, true) // 位置をENDにピッタリ合わせる
+          }
+        }
+      }
+    }, 100)
+
+    // クリーンアップ（コンポーネントが消えるときに監視を止める）
+    return () => clearInterval(interval)
+  }, [])
+
   // URLからVideoIDを抽出
   const extractVideoId = (inputUrl: string) => {
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|shorts\/)([^#&?]*).*/
