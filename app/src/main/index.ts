@@ -99,18 +99,24 @@ app.whenReady().then(() => {
 
     // 開発中とビルド後（.exe）で基準となるパスを自動で切り替える
     const baseDir = app.isPackaged
-      ? path.dirname(app.getPath('exe'))  // ビルド後：exe本体が置かれているフォルダ
-      : path.join(process.cwd(), '..')    // 開発中：プロジェクトルート（appの1つ上）
-    
-    // 保存先フォルダの作成
-    const outputDir = path.join(baseDir, 'output')
-    if (!fs.existsSync(outputDir)) {
-      fs.mkdirSync(outputDir, { recursive: true })
-    }
+      ? path.dirname(process.execPath)  // ビルド後：exe本体が置かれている場所
+      : process.cwd()                   // 開発中：appフォルダの直下
     
     // 実行ファイル（exe）の絶対パスを指定
     const ytdlpPath = path.join(baseDir, 'bin', 'yt-dlp.exe')
     const ffmpegPath = path.join(baseDir, 'bin', 'ffmpeg.exe')
+
+    // もし移動し忘れたりビルドに失敗したりしてexeが見つからない場合、すぐにエラーを返す
+    if (!fs.existsSync(ytdlpPath)) {
+      event.reply('generate-gif-complete', { success: false, error: `yt-dlp.exeが見つかりません: ${ytdlpPath}` })
+      return
+    }
+
+    // 権限エラーを回避するため、保存先をPCの「ビデオ（Videos）」フォルダ内の「yt2gif」フォルダに
+    const outputDir = path.join(app.getPath('videos'), 'yt2gif')
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true })
+    }
 
     // 出力ファイル名の決定
     const timestamp = new Date().getTime()
