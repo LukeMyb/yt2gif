@@ -142,7 +142,7 @@ app.whenReady().then(() => {
       console.log('[yt2gif] Stream URL fetched. Converting to GIF...')
       
       // ffmpegのコマンド（パスを直接指定）
-      const ffmpegCommand = `"${ffmpegPath}" -ss ${startTime} -i "${streamUrl}" -t ${duration} -vf "fps=15,scale=480:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse" -y "${outputPath}"`
+      const ffmpegCommand = `"${ffmpegPath}" -loglevel error -ss ${startTime} -i "${streamUrl}" -t ${duration} -vf "fps=15,scale=480:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse" -y "${outputPath}"`
       
       exec(ffmpegCommand, (ffError, _ffStdout, ffStderr) => {
         if (ffError) {
