@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import YouTube, { YouTubeEvent, YouTubePlayer } from 'react-youtube'
 import Slider from 'rc-slider'
 import 'rc-slider/assets/index.css'
@@ -6,6 +6,7 @@ import 'rc-slider/assets/index.css'
 function App() {
   const [url, setUrl] = useState('')
   const [videoId, setVideoId] = useState<string | null>(null)
+  const [isGenerating, setIsGenerating] = useState<boolean>(false)
   
   // スライダーと動画の状態管理
   const [duration, setDuration] = useState<number>(0)
@@ -77,21 +78,42 @@ function App() {
 
   // 生成ボタンを押したときの処理
   const handleGenerateGif = () => {
-    if (!url) return
+    if (!url || isGenerating) return
+    
+    setIsGenerating(true)
+
     const data = {
       url: url,
       startTime: range[0],
       endTime: range[1]
     }
     
-    // Electronのメインプロセス(裏側)へ通信を送る
-    // (TypeScriptの警告回避のため as any を使用しています)
     if ((window as any).electron) {
       (window as any).electron.ipcRenderer.send('generate-gif', data)
     } else {
       console.error('Electron環境で実行されていません')
+      setIsGenerating(false)
     }
   }
+
+  // 裏側から 'generate-gif-complete' が送られてきたらボタンを元に戻す
+  useEffect(() => {
+    if (!(window as any).electron) return
+
+    const ipc = (window as any).electron.ipcRenderer
+    ipc.on('generate-gif-complete', (_event, response) => {
+      setIsGenerating(false) // ボタンを通常状態に戻す
+      
+      if (!response.success) {
+        alert('エラーが発生しました。裏側のログを確認してください。\n' + response.error)
+      }
+    })
+
+    // クリーンアップ処理
+    return () => {
+      ipc.removeAllListeners('generate-gif-complete')
+    }
+  }, [])
 
   return (
     <div style={{ padding: '20px', fontFamily: 'sans-serif', minHeight: '100vh', backgroundColor: '#18181b', color: '#d4d4d8' }}>
@@ -167,13 +189,21 @@ function App() {
 
               <button 
                 onClick={handleGenerateGif}
+                disabled={isGenerating}
                 style={{
                   width: '100%', padding: '16px', 
-                  backgroundColor: '#ef4444', color: 'white', border: 'none', 
-                  borderRadius: '6px', fontSize: '18px', fontWeight: 'bold', cursor: 'pointer',
+                  backgroundColor: isGenerating ? '#52525b' : '#ef4444', 
+                  color: isGenerating ? '#a1a1aa' : 'white', 
+                  border: 'none', 
+                  borderRadius: '6px', fontSize: '18px', fontWeight: 'bold', 
+                  cursor: isGenerating ? 'not-allowed' : 'pointer',
+                  transition: 'background-color 0.2s'
                 }}
               >
-                GIFを生成する ({formatTime(range[1] - range[0])})
+                {isGenerating 
+                  ? 'GIFを生成中... (お待ちください)' 
+                  : `GIFを生成する (${formatTime(range[1] - range[0])})`
+                }
               </button>
             </div>
 

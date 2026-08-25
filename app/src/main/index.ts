@@ -66,7 +66,7 @@ app.whenReady().then(() => {
   })
 
   // ReactからのGIF生成リクエストを受け取る処理
-  ipcMain.on('generate-gif', (_event, args) => {
+  ipcMain.on('generate-gif', (event, args) => {
     const { url, startTime, endTime } = args
     const duration = endTime - startTime
 
@@ -95,6 +95,7 @@ app.whenReady().then(() => {
     exec(ytdlpCommand, (error, stdout, stderr) => {
       if (error) {
         console.error('[yt2gif] yt-dlp Error:', stderr)
+        event.reply('generate-gif-complete', { success: false, error: stderr })
         return
       }
       
@@ -108,6 +109,7 @@ app.whenReady().then(() => {
       exec(ffmpegCommand, (ffError, _ffStdout, ffStderr) => {
         if (ffError) {
           console.error('[yt2gif] ffmpeg Error:', ffStderr)
+          event.reply('generate-gif-complete', { success: false, error: ffStderr })
           return
         }
         
@@ -115,6 +117,7 @@ app.whenReady().then(() => {
         
         // 完了後、エクスプローラーで保存先のフォルダを自動的に開く
         shell.showItemInFolder(outputPath)
+        event.reply('generate-gif-complete', { success: true })
       })
     })
   })
