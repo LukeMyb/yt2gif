@@ -8,6 +8,9 @@ import * as path from 'path'
 import * as fs from 'fs'
 import * as http from 'http'
 
+// Chromiumの「私は自動化プログラムです」という自己申告フラグを根本から無効化する
+app.commandLine.appendSwitch('disable-blink-features', 'AutomationControlled')
+
 function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
@@ -85,8 +88,18 @@ function createWindow(): void {
 app.whenReady().then(() => {
   electronApp.setAppUserModelId('com.yt2gif.app')
 
-  // アプリ起動時に内部のキャッシュやクッキーを完全に消去し、Bot判定を解除する
+  // 起動時にキャッシュを完全にクリア
   session.defaultSession.clearStorageData()
+
+  // アプリ全体の通信をChromeブラウザに完全に偽装する
+  const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36'
+  session.defaultSession.setUserAgent(userAgent)
+
+  // 内部のすべての通信ヘッダーも強制的にChromeのものに書き換える
+  session.defaultSession.webRequest.onBeforeSendHeaders((details, callback) => {
+    details.requestHeaders['User-Agent'] = userAgent;
+    callback({ cancel: false, requestHeaders: details.requestHeaders });
+  });
 
   // Default open or close DevTools by F12 in development
   // and ignore CommandOrControl + R in production.
