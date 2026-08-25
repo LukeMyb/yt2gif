@@ -46,8 +46,10 @@ function App() {
       
       // 動かした方のつまみに合わせて動画をシークする
       if (playerRef.current) {
-        // 開始位置が変わった場合は開始位置へ、終了位置が変わった場合は終了位置へシーク
-        // (ここでは簡易的に、常に開始位置へシークする例としています)
+        // スライダーを触った瞬間に動画を一時停止する
+        playerRef.current.pauseVideo()
+        
+        // プレビューを開始位置にシークさせる
         playerRef.current.seekTo(newRange[0], true)
       }
     }
@@ -71,7 +73,13 @@ function App() {
       if (index === 0 && newRange[0] > newRange[1]) newRange[0] = newRange[1]
       if (index === 1 && newRange[1] < newRange[0]) newRange[1] = newRange[0]
 
-      if (playerRef.current) playerRef.current.seekTo(newRange[index], true)
+      if (playerRef.current) {
+        // 微調整ボタンを押した時も動画を一時停止する
+        playerRef.current.pauseVideo()
+        
+        // プレビューを調整した位置にシークさせる
+        playerRef.current.seekTo(newRange[index], true)
+      }
       return newRange
     })
   }
