@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import YouTube, { YouTubeEvent, YouTubePlayer } from 'react-youtube'
 import Slider from 'rc-slider'
 import 'rc-slider/assets/index.css'

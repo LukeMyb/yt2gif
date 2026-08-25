@@ -5,7 +5,6 @@ import icon from '../../resources/icon.png?asset'
 
 import { exec } from 'child_process'
 import * as path from 'path'
-import * as os from 'os'
 import * as fs from 'fs'
 
 function createWindow(): void {
@@ -67,7 +66,7 @@ app.whenReady().then(() => {
   })
 
   // ReactからのGIF生成リクエストを受け取る処理
-  ipcMain.on('generate-gif', (event, args) => {
+  ipcMain.on('generate-gif', (_event, args) => {
     const { url, startTime, endTime } = args
     const duration = endTime - startTime
 
@@ -106,7 +105,7 @@ app.whenReady().then(() => {
       // ffmpegのコマンド（パスを直接指定）
       const ffmpegCommand = `"${ffmpegPath}" -ss ${startTime} -i "${streamUrl}" -t ${duration} -vf "fps=15,scale=480:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse" -y "${outputPath}"`
       
-      exec(ffmpegCommand, (ffError, ffStdout, ffStderr) => {
+      exec(ffmpegCommand, (ffError, _ffStdout, ffStderr) => {
         if (ffError) {
           console.error('[yt2gif] ffmpeg Error:', ffStderr)
           return
