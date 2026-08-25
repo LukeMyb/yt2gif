@@ -13,8 +13,11 @@ function App() {
   const [range, setRange] = useState<[number, number]>([0, 0])
   const playerRef = useRef<YouTubePlayer | null>(null)
 
+  // 時刻の手入力モードの状態管理
+  const [editingIndex, setEditingIndex] = useState<0 | 1 | null>(null)
+  const [inputValue, setInputValue] = useState<string>('')
+
   // 自動停止のための監視機能
-  // setIntervalの中で常に最新の range を参照するためのRef
   const rangeRef = useRef<[number, number]>(range)
   useEffect(() => {
     rangeRef.current = range
@@ -90,6 +93,63 @@ function App() {
     const s = Math.floor(seconds % 60).toString().padStart(2, '0')
     const ms = Math.floor((seconds % 1) * 1000).toString().padStart(3, '0')
     return `${m}:${s}.${ms}`
+  }
+
+  // 文字列（例 "1:23.4" または "83.4"）を秒数に変換するヘルパー関数
+  const parseTime = (timeStr: string): number => {
+    const parts = timeStr.split(':')
+    if (parts.length === 2) {
+      // "分:秒" の形式
+      return parseFloat(parts[0]) * 60 + parseFloat(parts[1])
+    } else {
+      // "秒" のみの形式
+      return parseFloat(timeStr)
+    }
+  }
+
+  // 時刻表示をクリックして入力モードに入る時の処理
+  const handleTimeClick = (index: 0 | 1) => {
+    setEditingIndex(index)
+    // 編集開始時は現在の秒数をシンプルな数値（小数点以下2桁まで）として表示
+    setInputValue(range[index].toFixed(2))
+  }
+
+  // 入力を確定してスライダーと動画に反映させる処理
+  const handleTimeSubmit = () => {
+    if (editingIndex === null) return
+
+    let newSeconds = parseTime(inputValue)
+    
+    // 不正な入力（NaN）やマイナス値、動画の長さを超える値を防ぐ
+    if (isNaN(newSeconds) || newSeconds < 0) {
+      newSeconds = 0
+    } else if (newSeconds > duration) {
+      newSeconds = duration
+    }
+
+    setRange(prev => {
+      const newRange = [...prev] as [number, number]
+      newRange[editingIndex] = newSeconds
+
+      // 開始位置が終了位置を超えないように制御
+      if (editingIndex === 0 && newRange[0] > newRange[1]) newRange[0] = newRange[1]
+      if (editingIndex === 1 && newRange[1] < newRange[0]) newRange[1] = newRange[0]
+
+      if (playerRef.current) {
+        playerRef.current.pauseVideo()
+        playerRef.current.seekTo(newRange[editingIndex], true)
+      }
+      return newRange
+    })
+
+    setEditingIndex(null) // 入力モードを終了
+  }
+
+  // 入力中のキーボード操作（Enterで確定）
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleTimeSubmit()
+    }
   }
 
   // 100ms単位での微調整ボタンの処理
@@ -199,10 +259,29 @@ function App() {
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+                {/* ★変更：START側の時刻表示/入力欄 */}
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: '12px', color: '#a1a1aa' }}>START</div>
-                  <div style={{ fontSize: '24px', fontWeight: 'bold', fontFamily: 'monospace', margin: '5px 0', color: '#ffffff' }}>
-                    {formatTime(range[0])}
+                  <div style={{ margin: '5px 0', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {editingIndex === 0 ? (
+                      <input
+                        type="text"
+                        value={inputValue}
+                        onChange={(e) => setInputValue(e.target.value)}
+                        onBlur={handleTimeSubmit}
+                        onKeyDown={handleKeyDown}
+                        autoFocus
+                        style={inputStyle}
+                      />
+                    ) : (
+                      <div 
+                        onClick={() => handleTimeClick(0)}
+                        style={timeDisplayStyle}
+                        title="クリックして時間を入力"
+                      >
+                        {formatTime(range[0])}
+                      </div>
+                    )}
                   </div>
                   <div>
                     <button onClick={() => adjustRange(0, -0.1)} style={btnStyle}>-0.1s</button>
@@ -212,10 +291,29 @@ function App() {
 
                 <div style={{ color: '#52525b', fontWeight: 'bold', fontSize: '24px' }}>〜</div>
 
+                {/* ★変更：END側の時刻表示/入力欄 */}
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: '12px', color: '#a1a1aa' }}>END</div>
-                  <div style={{ fontSize: '24px', fontWeight: 'bold', fontFamily: 'monospace', margin: '5px 0', color: '#ffffff' }}>
-                    {formatTime(range[1])}
+                  <div style={{ margin: '5px 0', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {editingIndex === 1 ? (
+                      <input
+                        type="text"
+                        value={inputValue}
+                        onChange={(e) => setInputValue(e.target.value)}
+                        onBlur={handleTimeSubmit}
+                        onKeyDown={handleKeyDown}
+                        autoFocus
+                        style={inputStyle}
+                      />
+                    ) : (
+                      <div 
+                        onClick={() => handleTimeClick(1)}
+                        style={timeDisplayStyle}
+                        title="クリックして時間を入力"
+                      >
+                        {formatTime(range[1])}
+                      </div>
+                    )}
                   </div>
                   <div>
                     <button onClick={() => adjustRange(1, -0.1)} style={btnStyle}>-0.1s</button>
@@ -274,6 +372,33 @@ const btnStyle = {
   border: '1px solid #52525b', borderRadius: '4px', 
   backgroundColor: '#3f3f46', color: '#d4d4d8',
   fontWeight: 'bold'
+}
+
+// 時刻表示部分（クリックできることを示すスタイル）
+const timeDisplayStyle = {
+  fontSize: '24px', 
+  fontWeight: 'bold', 
+  fontFamily: 'monospace', 
+  color: '#ffffff',
+  cursor: 'pointer',
+  padding: '2px 8px',
+  borderRadius: '4px',
+  transition: 'background-color 0.2s'
+}
+
+// 入力欄のスタイル
+const inputStyle = {
+  width: '100px',
+  fontSize: '20px',
+  fontWeight: 'bold',
+  fontFamily: 'monospace',
+  textAlign: 'center' as const,
+  backgroundColor: '#3f3f46',
+  color: '#ffffff',
+  border: '1px solid #ef4444',
+  borderRadius: '4px',
+  padding: '4px',
+  outline: 'none'
 }
 
 export default App
