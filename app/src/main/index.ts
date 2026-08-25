@@ -6,6 +6,7 @@ import icon from '../../resources/icon.png?asset'
 import { exec } from 'child_process'
 import * as path from 'path'
 import * as fs from 'fs'
+import * as http from 'http'
 
 function createWindow(): void {
   // Create the browser window.
@@ -17,7 +18,8 @@ function createWindow(): void {
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false
+      sandbox: false,
+      webSecurity: false
     }
   })
 
@@ -35,6 +37,7 @@ function createWindow(): void {
 
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()
+    mainWindow.webContents.openDevTools()
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
@@ -47,7 +50,32 @@ function createWindow(): void {
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
   } else {
-    mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
+    const server = http.createServer((req, res) => {
+      let urlPath = req.url?.split('?')[0] || '/'
+      if (urlPath === '/') urlPath = '/index.html'
+      
+      const filePath = path.join(__dirname, '../renderer', urlPath)
+      if (fs.existsSync(filePath)) {
+        const ext = path.extname(filePath)
+        let contentType = 'text/html'
+        if (ext === '.js') contentType = 'text/javascript'
+        else if (ext === '.css') contentType = 'text/css'
+        else if (ext === '.svg') contentType = 'image/svg+xml'
+        
+        res.writeHead(200, { 'Content-Type': contentType })
+        fs.createReadStream(filePath).pipe(res)
+      } else {
+        res.writeHead(404)
+        res.end()
+      }
+    })
+    
+    server.listen(0, 'localhost', () => {
+      const addr = server.address()
+      if (addr && typeof addr !== 'string') {
+        mainWindow.loadURL(`http://localhost:${addr.port}`)
+      }
+    })
   }
 }
 
@@ -69,18 +97,20 @@ app.whenReady().then(() => {
     const { url, startTime, endTime } = args
     const duration = endTime - startTime
 
-    // appフォルダの1つ上のディレクトリ（プロジェクトルート）を取得
-    const projectRoot = path.join(process.cwd(), '..')
+    // 開発中とビルド後（.exe）で基準となるパスを自動で切り替える
+    const baseDir = app.isPackaged
+      ? path.dirname(app.getPath('exe'))  // ビルド後：exe本体が置かれているフォルダ
+      : path.join(process.cwd(), '..')    // 開発中：プロジェクトルート（appの1つ上）
     
-    // 保存先フォルダの作成（プロジェクトルートの output/）
-    const outputDir = path.join(projectRoot, 'output')
+    // 保存先フォルダの作成
+    const outputDir = path.join(baseDir, 'output')
     if (!fs.existsSync(outputDir)) {
       fs.mkdirSync(outputDir, { recursive: true })
     }
     
-    // 実行ファイル（exe）の絶対パスを指定（プロジェクトルートの bin/）
-    const ytdlpPath = path.join(projectRoot, 'bin', 'yt-dlp.exe')
-    const ffmpegPath = path.join(projectRoot, 'bin', 'ffmpeg.exe')
+    // 実行ファイル（exe）の絶対パスを指定
+    const ytdlpPath = path.join(baseDir, 'bin', 'yt-dlp.exe')
+    const ffmpegPath = path.join(baseDir, 'bin', 'ffmpeg.exe')
 
     // 出力ファイル名の決定
     const timestamp = new Date().getTime()
