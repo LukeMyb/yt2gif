@@ -153,7 +153,7 @@ function App() {
   }, [])
 
   return (
-    <div style={{ padding: '20px', fontFamily: 'sans-serif', minHeight: '100vh', backgroundColor: '#18181b', color: '#d4d4d8' }}>
+    <div style={{ padding: '20px', fontFamily: 'sans-serif', minHeight: '100vh', boxSizing: 'border-box', overflow: 'hidden', backgroundColor: '#18181b', color: '#d4d4d8' }}>
       <div style={{ width: '100%', margin: '0 auto' }}>
         
         <h2 style={{ color: '#ffffff', marginBottom: '20px' }}>yt2gif</h2>
